@@ -30,9 +30,17 @@ class UsersController {
       });
       let data = await dataPromise;
       const isUserExist = this.users.find(user => user.id === data.id);
-      this.users.push({ id: uuidv4(), ...data });
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(data));
+      
+      console.log(data)
+      if (data.hasOwnProperty('username') && data.hasOwnProperty('age') && data.hasOwnProperty('hobbies')) {
+        this.users.push({ id: uuidv4(), ...data });
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+      }
+      else {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end('Not all fields are filled');
+      }
       // if (data && !isUserExist) {
       //   this.users.push(data);
         // res.writeHead(201, { 'Content-Type': 'application/json' });
@@ -114,7 +122,7 @@ class UsersController {
         if (userIndex > -1) {
           this.users.splice(userIndex, 1);
         }
-        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.writeHead(204, { 'Content-Type': 'application/json' });
         res.end('Successfully deleted');
       }
       if (!userData) {
