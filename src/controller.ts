@@ -41,8 +41,6 @@ class UsersController {
       //   res.end(JSON.stringify(data));
       // }
     }
-    if (method === 'put') {
-    }
     } catch (error) {
       res
     }
