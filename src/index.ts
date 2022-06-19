@@ -2,9 +2,12 @@ import http from 'http';
 import url from 'url';
 import dotenv from 'dotenv';
 import path from 'path';
-import { IndexType } from 'typescript';
 import usersDB from './mock/users';
 import UserController from './controller';
+import cluster from 'node:cluster';
+import { cpus } from 'node:os';
+import process from 'node:process';
+dotenv.config({ path: path.join(process.cwd(), '.env') });
 interface ProcessEnv {
   [key: string]: string | undefined;
 }
@@ -24,11 +27,7 @@ let routes: IRoutes = {
 let router = (client: { req: any; res: any }): void => {
   let { req, res } = client;
   let users = usersDB;
-  // console.log(new URL(req.url as string, `http://${req.headers.host}`));
-  // console.log('req', url.parse(req.url, true));
-  // console.log('/users'.match(routes[0]))
   const pathUrl = url.parse(req.url, true).path;
-  // console.log(pathUrl);
   if (pathUrl in routes) {
     routes[pathUrl](req, res);
     return null;
@@ -45,10 +44,40 @@ let router = (client: { req: any; res: any }): void => {
     }
   }
 };
-const server = http.createServer((req, res) => {
-  router({ req, res });
-});
-server.on('clientError', (err, socket) => {
-  socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
-});
-server.listen(process.env.PORT);
+const numCPUs = cpus().length;
+if (process.argv
+  .filter(e => e.startsWith('multi'))[0].split('=')[1] == 'true') {
+    if (cluster.isPrimary) {
+      console.log(`Primary ${process.pid} is running`);
+      for (let i = 0; i < numCPUs; i++) {
+        cluster.fork();
+      }
+    
+      cluster.on('exit', (worker, code, signal) => {
+        console.log(`worker ${worker.process.pid} died`);
+      });
+    } else {
+      const server = http.createServer((req, res) => {
+        router({ req, res });
+      });
+      server.on('clientError', (err, socket) => {
+        socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
+      });
+      server.listen(process.env.PORT || 8000, () => {
+        console.log('Server listening on port:', process.env.PORT || 8001);
+      });
+      console.log(`Worker ${process.pid} started`);
+    }
+} else {
+  const server = http.createServer((req, res) => {
+    router({ req, res });
+  });
+  server.on('clientError', (err, socket) => {
+    socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
+  });
+  server.listen(process.env.PORT || 8000, () => {
+    console.log('Server listening on port:', process.env.PORT || 8001);
+  });
+  }
+
+

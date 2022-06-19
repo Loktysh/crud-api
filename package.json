@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start:dev": "nodemon ./src/index.ts",
-    "start:prod": "tsc && node ./dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:dev": "nodemon ./src/index.ts multi=false",
+    "start:prod": "tsc && node ./dist/index.js multi=false",
+    "start:multi": "tsc && node ./dist/index.js multi=true",
+    "test": "jest"
   },
   "author": "Loktysh",
   "license": "MIT",
@@ -15,6 +16,7 @@
     "cross-env": "^7.0.3",
     "dotenv": "^16.0.1",
     "eslint": "^8.17.0",
+    "jest": "^28.1.1",
     "nodemon": "^2.0.16",
     "prettier": "^2.7.1",
     "ts-node": "^10.8.1",
